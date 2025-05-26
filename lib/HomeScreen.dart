@@ -48,7 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         checkpointControllers.add(TextEditingController());
                       });
                     },
-                    child: const Text('+ Add Checkpoint'),
+                    child: const Text('Add Checkpoint'),
                   ),
                 ],
               ),
@@ -115,6 +115,24 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Future<void> fetchAndPrintChallenges() async {
+  final supabase = Supabase.instance.client;
+
+      try {
+        final response = await supabase
+            .from('challenges')
+            .select();
+
+        print("🔹 Challenges fetched:");
+        for (var challenge in response) {
+          print("${challenge['title']} (ID: ${challenge['id']})");
+        }
+      } catch (e) {
+        print("Error fetching challenges: $e");
+      }
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -134,7 +152,18 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: Center(
-        child: Text("Welcome, $userEmail"),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text("Welcome, $userEmail"),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: fetchAndPrintChallenges,
+              icon: const Icon(Icons.download),
+              label: const Text("Fetch Challenges"),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: showCreateChallengeDialogue, 
