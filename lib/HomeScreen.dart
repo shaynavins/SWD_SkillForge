@@ -185,6 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
     required String checkpointId,
     required String content,
     required bool isDone,
+    required int points,
   }) async {
     final user = supabase.auth.currentUser;
     if (user == null) return;
@@ -195,6 +196,11 @@ class _HomeScreenState extends State<HomeScreen> {
         'checkpoint_id': checkpointId,
         'content': content,
       });
+      await supabase.rpc('increment_user_points', params: {
+        'user_id': user.id,
+        'delta': points,
+      });
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Submitted!')),
       );
@@ -270,6 +276,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         checkpointId: cp['id'],
                         content: content,
                         isDone: true,
+                        points: challenge['points'] ?? 0,
                       );
                     },
                     child: const Text("Submit"),
