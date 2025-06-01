@@ -153,7 +153,7 @@ class _AuthScreenState extends State<AuthScreen> {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'SkillForge',
+                  'Code App',
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,

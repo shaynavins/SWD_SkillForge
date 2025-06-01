@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:codeapp/theme/app_theme.dart';
+import 'package:codeapp/realtime_service.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -13,9 +15,57 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final Map<String, TextEditingController> checkpointControllers = {};
   final supabase = Supabase.instance.client;
+  final _realtimeService = realtime_service();
   List<dynamic> challenges = [];
   Map<String, List<dynamic>> checkpointsMap = {};
   String? userId;
+  bool _isLoading = false;
+
+  void _setupRealtimeSubscriptions() {
+    // Subscribe to challenges table
+    _realtimeService.subscribeToChanges(
+      tableName: 'challenges',
+      onChange: (payload) {
+        fetchChallenges();
+      },
+    );
+
+    // Subscribe to checkpoints table
+    _realtimeService.subscribeToChanges(
+      tableName: 'checkpoints',
+      onChange: (payload) {
+        // Refresh checkpoints for all loaded challenges
+        checkpointsMap.keys.forEach((challengeId) {
+          fetchCheckpoints(challengeId);
+        });
+      },
+    );
+
+    // Subscribe to challenge participants
+    _realtimeService.subscribeToChanges(
+      tableName: 'challenge_participants',
+      onChange: (payload) {
+        fetchChallenges();
+      },
+    );
+
+    // Subscribe to checkpoint submissions
+    _realtimeService.subscribeToChanges(
+      tableName: 'checkpoint_submissions',
+      onChange: (payload) {
+        // Refresh checkpoints for the affected challenge
+        if (payload['new'] != null) {
+          final checkpointId = payload['new']['checkpoint_id'];
+          // Find the challenge ID for this checkpoint and refresh it
+          checkpointsMap.forEach((challengeId, checkpoints) {
+            if (checkpoints.any((cp) => cp['id'] == checkpointId)) {
+              fetchCheckpoints(challengeId);
+            }
+          });
+        }
+      },
+    );
+  }
 
   Future<void> showCreateChallengeDialogue() async {
     final titleController = TextEditingController();
@@ -278,16 +328,33 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = supabase.auth.currentUser;
     userId = user?.id;
     fetchChallenges();
+    _setupRealtimeSubscriptions();
+  }
+
+  @override
+  void dispose() {
+    _realtimeService.dispose();
+    super.dispose();
   }
 
   Future<void> fetchChallenges() async {
+    if (_isLoading) return;
+    
+    setState(() {
+      _isLoading = true;
+    });
+    
     try {
       final response = await supabase.from('challenges').select();
       setState(() {
         challenges = response;
+        _isLoading = false;
       });
     } catch (e) {
       print("Error fetching challenges: $e");
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 

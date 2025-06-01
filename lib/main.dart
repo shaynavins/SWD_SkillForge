@@ -9,7 +9,8 @@ import 'package:codeapp/theme/app_theme.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Supabase.initialize(url: 'https://nkcltlgzkajpaorloevb.supabase.co', anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5rY2x0bGd6a2FqcGFvcmxvZXZiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc4MjY4MTcsImV4cCI6MjA2MzQwMjgxN30.kQY3lzsTHplU9z75fixDQN186vHGeGDDlMTmH_-tWns');
-  runApp(const MainApp());
+  runApp(const ProviderScope(child: MainApp()));
+  
 }
 
 class MainApp extends ConsumerWidget {
