@@ -28,8 +28,8 @@ class _AuthScreenState extends State<AuthScreen> {
       errorMessage = null;
     });
 
-    final email = 'testuser@example.com';     // <-- hardcoded
-    final password = 'Test1234!';             // <-- hardcoded
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
 
     print('Attempting login for email: $email');
 
@@ -49,6 +49,33 @@ class _AuthScreenState extends State<AuthScreen> {
       print('Login response: $response');
 
       if (response.session != null) {
+        // Check if profile exists, if not create one
+        try {
+          final userId = response.user!.id;
+          final profileData = await Supabase.instance.client
+              .from('profiles')
+              .select()
+              .eq('id', userId)
+              .single();
+          
+          if (profileData == null) {
+            // Create profile if it doesn't exist
+            final username = email.split('@')[0];
+            await Supabase.instance.client.from('profiles').insert({
+              'id': userId,
+              'username': username,
+              'email': email,
+              'points': 0,
+              'created_at': DateTime.now().toIso8601String(),
+              'updated_at': DateTime.now().toIso8601String(),
+            });
+          }
+        } catch (profileError) {
+          print('Profile check/creation error: $profileError');
+          // Continue with navigation even if profile check fails
+          // The error will be handled when trying to access profile-dependent features
+        }
+
         // Navigate to home screen on successful login
         if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/home');
@@ -80,11 +107,10 @@ class _AuthScreenState extends State<AuthScreen> {
       errorMessage = null;
     });
 
-    final email = 'testuser@example.com';     // <-- hardcoded
-    final password = 'Test1234!';             // <-- hardcoded
+    final email = emailController.text.trim();
+    final password = passwordController.text.trim();
 
     print('Attempting signup for email: "$email"');
-    print('Email code units: ${email.codeUnits}');
 
     if (email.isEmpty || password.isEmpty) {
       setState(() {
@@ -110,10 +136,35 @@ class _AuthScreenState extends State<AuthScreen> {
       print('Signup response: $response');
 
       if (response.user != null) {
-        if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Signup successful! Please log in.')),
-        );
+        // Create a profile record for the new user
+        try {
+          final userId = response.user!.id;
+          final username = email.split('@')[0]; // Use part of email as initial username
+          
+          await Supabase.instance.client.from('profiles').insert({
+            'id': userId,
+            'username': username,
+            'points': 0,
+            
+          });
+          
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Signup successful! Please log in.')),
+          );
+          // Clear the input fields after successful signup
+          emailController.clear();
+          passwordController.clear();
+          // Switch to login mode
+          setState(() {
+            isLogin = true;
+          });
+        } catch (profileError) {
+          print('Error creating profile: $profileError');
+          setState(() {
+            errorMessage = 'Error creating user profile. Please contact support if this persists.';
+          });
+        }
       } else {
         setState(() {
           errorMessage = 'Signup failed.';

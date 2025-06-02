@@ -16,6 +16,8 @@ class _HomeScreenState extends State<HomeScreen> {
   final Map<String, TextEditingController> checkpointControllers = {};
   final supabase = Supabase.instance.client;
   final _realtimeService = realtime_service();
+  TextEditingController searchController = TextEditingController();
+  List<dynamic> searchResults = [];
   List<dynamic> challenges = [];
   Map<String, List<dynamic>> checkpointsMap = {};
   String? userId;
@@ -64,6 +66,99 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         }
       },
+    );
+  }
+
+  Future<void> searchChallenges(String query) async { 
+    if(query.isEmpty) {
+      setState(()=> searchResults = []);
+      return;
+    }
+
+    try {
+      final results = await Supabase.instance.client
+        .from('challenges')
+        .select()
+        .ilike('title', '%$query%');
+
+      setState(()=> searchResults = results);
+    } catch (e) {
+      print("Error: $e");
+    }
+  }
+  Widget _buildSearchResults() {
+    return Container(
+      child: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: TextField(
+              controller: searchController,
+              onChanged: searchChallenges,
+              decoration: InputDecoration(
+                hintText: 'Search challenges...',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.search),
+                suffixIcon: searchController.text.isNotEmpty
+                    ? IconButton(
+                        icon: Icon(Icons.clear),
+                        onPressed: () {
+                          searchController.clear();
+                          searchChallenges('');
+                        },
+                      )
+                    : null,
+              ),
+            ),
+          ),
+          Expanded(
+            child: searchResults.isEmpty
+                ? Center(
+                    child: Text(
+                      searchController.text.isEmpty
+                          ? 'Start typing to search challenges'
+                          : 'No challenges found',
+                      style: TextStyle(
+                        color: AppTheme.textColor.withOpacity(0.6),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    itemCount: searchResults.length,
+                    itemBuilder: (context, index) {
+                      final challenge = searchResults[index];
+                      return ListTile(
+                        title: Text(
+                          challenge['title'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        subtitle: Text(
+                          'Points: ${challenge['points'] ?? 0}',
+                          style: TextStyle(
+                            color: AppTheme.textColor.withOpacity(0.7),
+                          ),
+                        ),
+                        leading: CircleAvatar(
+                          backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                          child: Icon(
+                            Icons.assignment,
+                            color: AppTheme.primaryColor,
+                          ),
+                        ),
+                        onTap: () {
+                          // Handle challenge selection
+                          searchController.clear();
+                          searchChallenges('');
+                          // TODO: Navigate to challenge details or handle selection
+                        },
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -515,6 +610,42 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text("SkillForge", style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: Colors.transparent,
+                builder: (context) => Container(
+                  height: MediaQuery.of(context).size.height * 0.9,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Container(
+                        margin: const EdgeInsets.only(top: 8),
+                        height: 4,
+                        width: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.grey[300],
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      Expanded(
+                        child: _buildSearchResults(),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () async {
               await supabase.auth.signOut();
@@ -554,10 +685,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   style: AppTheme.headingStyle,
                 ),
                 ElevatedButton.icon(
-                   onPressed: () async {
+                  onPressed: () async {
                     Navigator.of(context).pushReplacementNamed('/discussion');
                   },
                   label: const Text("Discussions"),
+                  icon: const Icon(Icons.forum),
+                ),
+                 ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(context).pushReplacementNamed('/leaderboard');
+                  },
+                  label: const Text("Leaderboard"),
+                  icon: const Icon(Icons.forum),
                 ),
               ],
             ),

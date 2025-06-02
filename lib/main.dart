@@ -1,6 +1,7 @@
 import 'package:codeapp/AuthScreen.dart' hide HomeScreen;
 import 'package:codeapp/DiscussionPage.dart';
 import 'package:codeapp/HomeScreen.dart';
+import 'package:codeapp/LeaderBoard.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -28,6 +29,7 @@ class MainApp extends ConsumerWidget {
         '/': (context) => const AuthScreen(),
         '/home': (context) => const HomeScreen(),
         '/discussion': (context) => const DiscussionPage(),
+        '/leaderboard': (context) => const LeaderBoard(),
       },
     );
   }
