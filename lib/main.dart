@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:codeapp/theme/app_theme.dart';
+import 'package:codeapp/UserScreen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +31,7 @@ class MainApp extends ConsumerWidget {
         '/home': (context) => const HomeScreen(),
         '/discussion': (context) => const DiscussionPage(),
         '/leaderboard': (context) => const LeaderBoard(),
+        '/user': (context) => const UserScreen(),
       },
     );
   }

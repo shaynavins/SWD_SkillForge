@@ -698,6 +698,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   label: const Text("Leaderboard"),
                   icon: const Icon(Icons.forum),
                 ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(context).pushReplacementNamed('/user');
+                  },
+                  label: const Text("Profile"),
+                  icon: const Icon(Icons.forum),
+                ),
               ],
             ),
           ),

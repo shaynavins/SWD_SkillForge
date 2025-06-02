@@ -79,6 +79,13 @@ class _LeaderBoardState extends State<LeaderBoard> {
                   icon: const Icon(Icons.forum),
                   label: const Text("Discussions"),
                 ),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    Navigator.of(context).pushReplacementNamed('/user');
+                  },
+                  label: const Text("Profile"),
+                  icon: const Icon(Icons.forum),
+                ),
               ],
             ),
           ),
